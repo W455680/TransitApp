@@ -2,18 +2,24 @@ package com.example.transitapp
 
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import android.support.v4.content.ContextCompat
+import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.navigation.compose.*
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.wear.compose.material.Text
+import com.google.android.libraries.maps.MapView
+import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -22,74 +28,99 @@ fun App() {
 
     Scaffold(
         bottomBar = {
-            BottomAppBar {
-                BottomNavigation {
-                    val screens = listOf(
-                        Screen.Map,
-                        Screen.Route,
-                        Screen.Alert
+            BottomAppBar (
+                actions = {IconButton(onClick = { navController.navigate("MapScreen") }) {
+                    Icon(
+                        painterResource(id = R.drawable.baseline_map_24),
+                        contentDescription = "MapScreen"
                     )
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-                    screens.forEach { screen ->
-                        BottomNavigationItem(
-                            icon = { Icon(imageVector = screen.icon, contentDescription = null) },
-                            label = { Text(text = stringResource(screen.title)) },
-                            selected = currentRoute == screen.route,
-                            onClick = {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            }
+                }
+                    IconButton(onClick = { navController.navigate("RouteScreen") }) {
+                        Icon(
+                            painterResource(id = R.drawable.baseline_route_24),
+                            contentDescription = "RouteScreen"
+                        )
+                    }
+                    IconButton(onClick = { navController.navigate("AlertScreen") }) {
+                        Icon(
+                            painterResource(id = R.drawable.baseline_add_alert_24),
+                            contentDescription = "AlertScreen"
                         )
                     }
                 }
+                )
             }
-        }
-    ) {
-        NavHost(navController = navController, startDestination = Screen.Map.route) {
-            composable(Screen.Map.route) {
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = "MapScreen",
+            modifier = Modifier.padding(innerPadding)
+        ){
+            composable(route = "MapScreen") {
                 MapScreen()
             }
-            composable(Screen.Route.route) {
+            composable(route = "RouteScreen") {
                 RouteScreen()
             }
-            composable(Screen.Alert.route) {
+            composable(route = "AlertScreen") {
                 AlertScreen()
             }
         }
     }
 }
 
-sealed class Screen(val route: String, val title: Int, val icon: ImageVector) {
-    object Map : Screen("map", R.string.map_screen, Icons.Default.map)
-    object Route : Screen("route", R.string.route_screen, Icons.Default.directions)
-    object Alert : Screen("alert", R.string.alert_screen, Icons.Default.notifications)
-}
+
+
 
 @Composable
 fun MapScreen() {
-    ScreenContent(Screen.Map.title)
+    Text(text = "mapscreen")
 }
 
 @Composable
 fun RouteScreen() {
-    ScreenContent(Screen.Route.title)
+    Text(text = "RouteScreen")
 }
 
 @Composable
 fun AlertScreen() {
-    ScreenContent(Screen.Alert.title)
+    Text(text = "AlertScreen")
 }
 
-@Composable
-fun ScreenContent(title: Int) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = stringResource(id = title))
+AndroidView(factory = { ctx ->
+    val layout = LinearLayout(ctx).apply {
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        )
+        orientation = LinearLayout.VERTICAL
+
+        // Creating and adding MapView
+        val mapView = MapView(ctx).apply {
+            onCreate(null)
+            getMapAsync { mapboxMap ->
+                mapboxMap.setCamera(
+                    CameraOptions.Builder()
+                        .center(Point.fromLngLat(-98.0, 39.5))
+                        .pitch(0.0)
+                        .zoom(2.0)
+                        .bearing(0.0)
+                        .build()
+                )
+            }
+        }
+        addView(mapView)
+
+
+        val imageView = ImageView(ctx).apply {
+            val drawable = ContextCompat.getDrawable(ctx, R.drawable.composelogo)
+            setImageDrawable(drawable)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        addView(imageView)
     }
-}
+    layout
+})
