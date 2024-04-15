@@ -10,12 +10,17 @@ class MainViewModel : ViewModel() {
 
     private val _feedStateFlow = MutableStateFlow<GtfsRealtime.FeedMessage?>(null)
     val feedStateFlow: StateFlow<GtfsRealtime.FeedMessage?> = _feedStateFlow
+
+
+    private val _feedTwoStateFlow = MutableStateFlow<GtfsRealtime.FeedMessage?>(null)
+    val feedTwoStateFlow: StateFlow<GtfsRealtime.FeedMessage?> = _feedTwoStateFlow
+
     fun loadBusPositions() {
         Thread {
             try {
                 val url = URL("https://gtfs.halifax.ca/realtime/Vehicle/VehiclePositions.pb")
                 val feed = GtfsRealtime.FeedMessage.parseFrom(url.openStream())
-
+                //https://gtfs.halifax.ca/realtime/Alert/Alerts.pb
                 for (entity in feed.entityList) {
                     if (entity.hasVehicle()) {
                         val vehicle = entity.vehicle
@@ -33,16 +38,23 @@ class MainViewModel : ViewModel() {
         }.start()
     }
 
-    private fun fetchFeed() {
-        // Fetch feed from URL
-        val url = URL("https://gtfs.halifax.ca/realtime/Vehicle/VehiclePositions.pb")
-        val feed = GtfsRealtime.FeedMessage.parseFrom(url.openStream())
+//    //private fun fetchFeed() {
+//        // Fetch feed from URL
+//        val url = URL("https://gtfs.halifax.ca/realtime/Vehicle/VehiclePositions.pb")
+//        val feed = GtfsRealtime.FeedMessage.parseFrom(url.openStream())
+//
+//        // Update StateFlow with fetched feed
+//        _feedStateFlow.value = feed
+//    }
+//    init {
+//        fetchFeed()
+//    }
 
-        // Update StateFlow with fetched feed
-        _feedStateFlow.value = feed
-    }
-    init {
-        fetchFeed()
-    }
+}
 
+fun Alerts() {
+    Thread {
+        val alertUrl = URL("https://gtfs.halifax.ca/realtime/Alert/Alerts.pb")
+        val feedTwo = GtfsRealtime.FeedMessage.parseFrom(alertUrl.openStream())
+    }
 }
